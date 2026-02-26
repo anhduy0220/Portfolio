@@ -1,56 +1,73 @@
-/*===== MENU SHOW =====*/ 
-const showMenu = (toggleId, navId) =>{
-    const toggle = document.getElementById(toggleId),
-    nav = document.getElementById(navId)
+// ===== Navbar "scrolled" shadow =====
+const header = document.querySelector('.site-header');
 
-    if(toggle && nav){
-        toggle.addEventListener('click', ()=>{
-            nav.classList.toggle('show')
-        })
+function setHeaderState() {
+  const y = window.scrollY || document.documentElement.scrollTop;
+  if (!header) return;
+  header.classList.toggle('scrolled', y > 12);
+}
+
+window.addEventListener('scroll', setHeaderState);
+setHeaderState();
+
+
+// ===== Active nav link on scroll =====
+const navLinks = document.querySelectorAll('.navbar .nav-link[href^="#"]');
+const sections = [...document.querySelectorAll('section[id], main[id]')];
+
+function setActiveLink() {
+  const scrollY = window.scrollY + 110; // offset for fixed header
+  let currentId = 'home';
+
+  sections.forEach(sec => {
+    const top = sec.offsetTop;
+    const height = sec.offsetHeight;
+    const id = sec.getAttribute('id');
+
+    if (scrollY >= top && scrollY < top + height) {
+      currentId = id;
     }
+  });
+
+  navLinks.forEach(a => {
+    const href = a.getAttribute('href').replace('#', '');
+    a.classList.toggle('active', href === currentId);
+  });
 }
-showMenu('nav-toggle','nav-menu')
 
-/*==================== REMOVE MENU MOBILE ====================*/
-const navLink = document.querySelectorAll('.nav__link')
+window.addEventListener('scroll', setActiveLink);
+setActiveLink();
 
-function linkAction(){
-    const navMenu = document.getElementById('nav-menu')
-    // When we click on each nav__link, we remove the show-menu class
-    navMenu.classList.remove('show')
-}
-navLink.forEach(n => n.addEventListener('click', linkAction))
 
-/*==================== SCROLL SECTIONS ACTIVE LINK ====================*/
-const sections = document.querySelectorAll('section[id]')
-
-function scrollActive(){
-    const scrollY = window.pageYOffset
-
-    sections.forEach(current =>{
-        const sectionHeight = current.offsetHeight
-        const sectionTop = current.offsetTop - 50;
-        sectionId = current.getAttribute('id')
-
-        if(scrollY > sectionTop && scrollY <= sectionTop + sectionHeight){
-            document.querySelector('.nav__menu a[href*=' + sectionId + ']').classList.add('active')
-        }else{
-            document.querySelector('.nav__menu a[href*=' + sectionId + ']').classList.remove('active')
-        }
-    })
-}
-window.addEventListener('scroll', scrollActive)
-
-/*===== SCROLL REVEAL ANIMATION =====*/
-const sr = ScrollReveal({
-    origin: 'top',
-    distance: '60px',
-    duration: 2000,
-    delay: 200,
-//     reset: true
+// ===== Close mobile nav on click =====
+const navCollapseEl = document.getElementById('mainNav');
+navLinks.forEach(link => {
+  link.addEventListener('click', () => {
+    if (!navCollapseEl) return;
+    const bsCollapse = bootstrap.Collapse.getInstance(navCollapseEl);
+    // If menu is open on mobile, close it after click
+    if (bsCollapse && navCollapseEl.classList.contains('show')) {
+      bsCollapse.hide();
+    }
+  });
 });
 
-sr.reveal('.home__data, .about__img, .skills__subtitle, .skills__text',{}); 
-sr.reveal('.home__img, .about__subtitle, .about__text, .skills__img',{delay: 400}); 
-sr.reveal('.home__social-icon',{ interval: 200}); 
-sr.reveal('.skills__data, .work__img, .contact__input',{interval: 200}); 
+
+// ===== Reveal on scroll (IntersectionObserver) =====
+const revealEls = document.querySelectorAll('.reveal');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('is-visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.15 });
+
+revealEls.forEach(el => observer.observe(el));
+
+
+// ===== Footer year =====
+const yearEl = document.getElementById('year');
+if (yearEl) yearEl.textContent = new Date().getFullYear();
